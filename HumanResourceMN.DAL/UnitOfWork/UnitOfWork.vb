@@ -23,6 +23,16 @@
             Return _users
         End Get
     End Property
+    Private _roles As IRoleRepository
+    Public ReadOnly Property Roles As IRoleRepository _
+        Implements IUnitOfWork.Roles
+        Get
+            If _roles Is Nothing Then
+                _roles = New RoleRepository(_context)
+            End If
+            Return _roles
+        End Get
+    End Property
     Public Async Function SaveAsync() As Task Implements IUnitOfWork.SaveAsync
         Await _context.SaveChangesAsync()
     End Function

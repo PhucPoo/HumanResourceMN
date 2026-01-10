@@ -4,13 +4,14 @@ Imports System.Text.RegularExpressions
 Imports HumanResourceMN.DAL
 Imports Microsoft.Build.Utilities
 Imports NLog
+Imports System.Data.Entity
 Imports Task = System.Threading.Tasks.Task
 
 Public Class AuthService
     Implements IAuthService
-    Private ReadOnly _uow As IUnitOfWork
-    Private Shared logger As NLog.Logger = LogManager.GetCurrentClassLogger()
 
+    Private ReadOnly _uow As New UnitOfWork
+    Private Shared logger As NLog.Logger = LogManager.GetCurrentClassLogger()
 
     Public Async Function LoginAsync(userName As String, password As String) As Task(Of LoginResponseDto) _
         Implements IAuthService.LoginAsync
@@ -37,24 +38,32 @@ Public Class AuthService
             Throw New Exception(AuthMessages.UserNameOrPasswordErorr)
         End If
 
+        ' Lấy tên role từ Users.Role (trường hợp bạn đã xoá bảng UserRoles)
+        Dim roleName As String = Nothing
+        Try
+            roleName = Await _uow.Context.Users _
+                .Include(Function(u) u.Role) _
+                .Where(Function(u) u.Id = user.Id) _
+                .Select(Function(u) u.Role.RoleName) _
+                .FirstOrDefaultAsync()
+        Catch ex As Exception
+            logger.Error(ex, "Lỗi khi lấy role cho userId=" & user.Id)
+            Throw
+        End Try
 
-        ' lấy tên Role
-        'Dim roleName = Await _uow.UserRoles.GetRoleNameByUserIdAsync(user.Id)
-
-        'If String.IsNullOrEmpty(roleName) Then
-        '    logger.Warn("Tài khoản chưa được phân quyền.")
-        '    Throw New Exception(AuthMessages.AccountNotRole)
-        'End If
+        If String.IsNullOrEmpty(roleName) Then
+            logger.Warn("Tài khoản chưa được phân quyền.")
+            Throw New Exception(AuthMessages.AccountNotRole)
+        End If
 
         logger.Info("Login thành công")
 
         Return New LoginResponseDto With {
             .UserId = user.Id,
-            .UserName = user.Username
+            .UserName = user.Username,
+            .RoleName = roleName
         }
     End Function
-
-
 
     Public Async Function VerifyAccountAsync(userName As String, code As String) As Task _
         Implements IAuthService.VerifyAccountAsync
@@ -65,17 +74,6 @@ Public Class AuthService
             logger.Warn("User không tồn tại")
             Throw New Exception(AuthMessages.AccountNotExist)
         End If
-
-        'If user.IsActive Then
-        '    logger.Warn("Account đã được kích hoạt")
-        '    Throw New Exception(AuthMessages.AccountIsActive)
-        'End If
-
-        'If user.VerificationCode <> code Then
-        '    logger.Info("Code không đúng")
-        '    Throw New Exception(AuthMessages.CodeError)
-        'End If
-
 
         logger.Info("Kích hoạt thành công")
 
@@ -115,7 +113,5 @@ Public Class AuthService
         If Not Regex.IsMatch(password, "[^a-zA-Z0-9]") Then
             Throw New Exception("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt")
         End If
-
     End Sub
-
 End Class

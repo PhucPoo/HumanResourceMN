@@ -149,6 +149,7 @@
     <Compile Include="Entities\Employees.vb" />
     <Compile Include="Entities\Roles.vb" />
     <Compile Include="Entities\Users.vb" />
+    <Compile Include="Enum\RoleType.vb" />
     <Compile Include="Form1.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -195,6 +196,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Constants\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".gitignore" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <Import Project="..\packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets" Condition="Exists('..\packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets')" />

@@ -7,4 +7,5 @@ Public Interface IUserRepository
 
     Function GetByUsernameAsync(userName As String) As Task(Of Users)
     Function GetAllIncludedDeleted() As IQueryable(Of Users)
+    Function GetRoleNameByUserIdAsync(userId As Integer) As Task(Of String)
 End Interface
